@@ -1,6 +1,8 @@
 package net.kuehldesign.shoebox.cli;
 
 import java.io.File;
+import net.kuehldesign.shoebox.exception.InstanceAlreadyExistsHereException;
+import net.kuehldesign.shoebox.instance.ShoeboxInstance;
 
 public class ShoeboxInterface {
     public static void main(String[] args) {
@@ -35,8 +37,16 @@ public class ShoeboxInterface {
             }
         }
         
+        // branch out for each possible command
         if (command.equals("init")) {
-            System.out.println("current directory: " + workingDirectory.getAbsolutePath());
+            ShoeboxInstance instance = new ShoeboxInstance(workingDirectory);
+            
+            try {
+                instance.initialize();
+            } catch (InstanceAlreadyExistsHereException ex) {
+                System.err.println("There is already a Shoebox instance here.");
+                System.exit(102);
+            }
         }
     }
 }
