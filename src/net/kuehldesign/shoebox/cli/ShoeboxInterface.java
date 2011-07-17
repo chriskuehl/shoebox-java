@@ -3,6 +3,7 @@ package net.kuehldesign.shoebox.cli;
 import java.io.File;
 import net.kuehldesign.shoebox.exception.InstanceAlreadyExistsHereException;
 import net.kuehldesign.shoebox.exception.UnableToInitializeInstanceHereException;
+import net.kuehldesign.shoebox.exception.UnableToLoadInstanceException;
 import net.kuehldesign.shoebox.instance.ShoeboxInstance;
 
 public class ShoeboxInterface {
@@ -40,7 +41,14 @@ public class ShoeboxInterface {
         
         // branch out for each possible command
         if (command.equals("init")) {
-            ShoeboxInstance instance = new ShoeboxInstance(workingDirectory);
+            ShoeboxInstance instance = null;
+            
+            try {
+                instance = new ShoeboxInstance(workingDirectory);
+            } catch (UnableToLoadInstanceException ex) {
+                System.err.println("There is already a (possibly malformed) Shoebox instance here.");
+                System.exit(104);
+            }
             
             try {
                 instance.initialize();

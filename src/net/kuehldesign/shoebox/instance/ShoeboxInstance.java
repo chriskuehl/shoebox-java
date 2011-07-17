@@ -4,20 +4,29 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.kuehldesign.shoebox.exception.InstanceAlreadyExistsHereException;
 import net.kuehldesign.shoebox.exception.UnableToConnectToDatabaseException;
 import net.kuehldesign.shoebox.exception.UnableToInitializeInstanceHereException;
+import net.kuehldesign.shoebox.exception.UnableToLoadInstanceException;
 
 public class ShoeboxInstance {
     private File directory;
     private Connection connection;
     
     // constructor
-    public ShoeboxInstance(File directory) {
+    public ShoeboxInstance(File directory) throws UnableToLoadInstanceException {
         this.directory = directory;
         
         if (instanceExistsHere()) {
-            // TODO: load instance information
+            try {
+                establishConnection();
+                // TODO: load instance information
+            } catch (UnableToConnectToDatabaseException ex) {
+                ex.printStackTrace();
+                throw new UnableToLoadInstanceException();
+            }
         }
     }
     
