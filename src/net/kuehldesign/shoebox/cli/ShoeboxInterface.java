@@ -2,6 +2,7 @@ package net.kuehldesign.shoebox.cli;
 
 import java.io.File;
 import net.kuehldesign.shoebox.exception.InstanceAlreadyExistsHereException;
+import net.kuehldesign.shoebox.exception.UnableToInitializeInstanceHereException;
 import net.kuehldesign.shoebox.instance.ShoeboxInstance;
 
 public class ShoeboxInterface {
@@ -46,6 +47,9 @@ public class ShoeboxInterface {
             } catch (InstanceAlreadyExistsHereException ex) {
                 System.err.println("There is already a Shoebox instance here.");
                 System.exit(102);
+            } catch (UnableToInitializeInstanceHereException ex) {
+                System.err.println("Unable to initialize instance here.");
+                System.exit(103);
             }
         }
     }
