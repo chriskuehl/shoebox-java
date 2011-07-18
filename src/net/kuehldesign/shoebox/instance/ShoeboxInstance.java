@@ -90,6 +90,12 @@ public class ShoeboxInstance {
         insertPropertyStatement.close();
     }
     
+    public void deleteTag(int tagIDToDelete) throws SQLException {
+        Statement statement = getConnection().createStatement();
+        statement.executeUpdate("DELETE FROM tags WHERE rowid = " + tagIDToDelete);
+        statement.close();
+    }
+    
     public LinkedList<ShoeboxTag> getTags() throws SQLException {
         LinkedList<ShoeboxTag> tags = new LinkedList();
         
@@ -107,6 +113,36 @@ public class ShoeboxInstance {
         statement.close();
         
         return tags;
+    }
+    
+    public ShoeboxTag getTag(int tagID) throws SQLException {
+        ShoeboxTag tag = null;
+        
+        Statement statement = getConnection().createStatement();
+        ResultSet results = statement.executeQuery("SELECT rowid, * FROM tags WHERE rowid = " + tagID);
+        
+        if (results.next()) {
+            tag = new ShoeboxTag(results.getString("title"), results.getInt("max_age"), results.getInt("delete_after"), results.getBoolean("accept_all"));
+            tag.setID(results.getInt("rowid"));
+        }
+        
+        results.close();
+        statement.close();
+        
+        return tag;
+    }
+    
+    public void updateTag(int tagToModify, String newTitle, int newMaxAge, int newDeleteAfter, boolean newAcceptAll) throws SQLException {
+        PreparedStatement updateTagStatement = getConnection().prepareStatement("UPDATE tags SET title = ?, max_age = ?, delete_after = ?, accept_all = ? WHERE rowid = ?");
+        
+        updateTagStatement.setString(1, newTitle);
+        updateTagStatement.setInt(2, newMaxAge);
+        updateTagStatement.setInt(3, newDeleteAfter);
+        updateTagStatement.setBoolean(4, newAcceptAll);
+        updateTagStatement.setInt(5, tagToModify);
+        
+        updateTagStatement.executeUpdate();
+        updateTagStatement.close();
     }
     
     public void addTag(ShoeboxTag tag) throws SQLException {

@@ -1,11 +1,17 @@
 package net.kuehldesign.shoebox.cli;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.sql.SQLException;
 import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.kuehldesign.shoebox.exception.InstanceAlreadyExistsHereException;
 import net.kuehldesign.shoebox.exception.UnableToInitializeInstanceHereException;
 import net.kuehldesign.shoebox.exception.UnableToLoadInstanceException;
+import net.kuehldesign.shoebox.exception.UnableToReadFromConsoleException;
 import net.kuehldesign.shoebox.instance.ShoeboxInstance;
 import net.kuehldesign.shoebox.instance.ShoeboxTag;
 
@@ -19,6 +25,9 @@ public class ShoeboxInterface {
             System.err.println("You must specify a command. Try \"help\".");
             System.exit(100);
         }
+        
+        InputStreamReader inreader = new InputStreamReader(System.in);
+        BufferedReader reader = new BufferedReader(inreader);
         
         File workingDirectory = new File("");
         
@@ -111,11 +120,110 @@ public class ShoeboxInterface {
                     for (ShoeboxTag tag : tags) {
                         System.out.println(tag.getTitle() + " (" + tag.getID() + "): max_age=" + tag.getMaxAge() + ", delete_after=" + tag.getDeleteAfter() + ", accept_all=" + (tag.acceptsAll() ? "yes" : "no"));
                     }
+                    
+                    System.out.println("");
+                    System.out.println("What would you like to do?");
+                    System.out.println("  1) Add another tag");
+                    System.out.println("  2) Delete an existing tag");
+                    System.out.println("  3) Modify an existing tag");
+                    
+                    System.out.println("  0) Exit");
+                    
+                    int choice = getIntFromConsole(reader, "Enter your choice:");
+                    
+                    switch (choice) {
+                        case 1:
+                            String title = getLineFromConsole(reader, "Enter the tag title:");
+                            int maxAge = getIntFromConsole(reader, "Enter the tag max age (in seconds):");
+                            int deleteAfter = getIntFromConsole(reader, "Enter the time to delete snapshots after (in seconds):");
+                            
+                            String response = "";
+                            
+                            while (! response.equals("y") && ! response.equals("n")) {
+                                response = getLineFromConsole(reader, "Should new snapshots always be given this tag? [y/n]:");
+                            }
+                            
+                            boolean alwaysGive = response.equals("y");
+                            instance.addTag(new ShoeboxTag(title, maxAge, deleteAfter, alwaysGive));
+                            
+                            System.out.println("Tag added.");
+                        break;
+                        
+                        case 2:
+                            System.out.println("Which tag do you want to delete?");
+                            int tagToDelete = getIntFromConsole(reader, "Enter the tag ID:");
+                            
+                            if (tagToDelete > 0) {
+                                instance.deleteTag(tagToDelete);
+                                System.out.println("Tag deleted.");
+                            }
+                        break;
+                            
+                        case 3:
+                            System.out.println("Which tag do you want to modify?");
+                            int tagToModify = getIntFromConsole(reader, "Enter the tag ID:");
+                            
+                            if (tagToModify > 0) {
+                                ShoeboxTag tag = instance.getTag(tagToModify);
+                                
+                                if (tag == null) {
+                                    System.err.println("No tag found with that ID.");
+                                    System.exit(109);
+                                }
+                                
+                                String newTitle = getLineFromConsole(reader, "Enter the new tag title [" + tag.getTitle() + "]:");
+                                int newMaxAge = getIntFromConsole(reader, "Enter the new tag max age (in seconds) [" + tag.getMaxAge() + "]:");
+                                int newDeleteAfter = getIntFromConsole(reader, "Enter the new time to delete snapshots after (in seconds) [" + tag.getDeleteAfter() + "]:");
+
+                                String newResponse = "";
+
+                                while (! newResponse.equals("y") && ! newResponse.equals("n")) {
+                                    newResponse = getLineFromConsole(reader, "Should new snapshots always be given this tag? [y/n] [" + (tag.acceptsAll() ? "y" : "n") + "]:");
+                                }
+
+                                boolean newAlwaysGive = newResponse.equals("y");
+                                instance.updateTag(tagToModify, newTitle, newMaxAge, newDeleteAfter, newAlwaysGive);
+
+                                System.out.println("Tag modified.");
+                            }
+                        break;
+                    }
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();
                 System.err.println("Unable to find tags.");
                 System.exit(107);
+            } catch (UnableToReadFromConsoleException ex) {
+                ex.printStackTrace();
+                System.err.println("Unable to read from console.");
+                System.exit(108);
+            }
+        }
+    }
+    
+    private static String getLineFromConsole(BufferedReader reader, String prompt) throws UnableToReadFromConsoleException {
+        String line = null;
+
+        while (line == null || line.length() <= 0) {
+            System.out.print(prompt + " ");
+
+            try {
+                line = reader.readLine();
+            } catch (IOException ex) {
+                throw new UnableToReadFromConsoleException();
+            }
+        }
+
+        return line;
+    }
+    
+    public static int getIntFromConsole(BufferedReader reader, String prompt) throws UnableToReadFromConsoleException {
+        while (true) {
+            try {
+                int read = Integer.valueOf(getLineFromConsole(reader, prompt));
+                return read;
+            } catch (NumberFormatException ex) {
+                System.err.println("That wasn't expected. Please try again.");
             }
         }
     }
