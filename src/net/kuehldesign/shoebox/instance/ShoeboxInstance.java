@@ -3,6 +3,7 @@ package net.kuehldesign.shoebox.instance;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Date;
@@ -33,6 +34,13 @@ public class ShoeboxInstance {
     // public methods
     public boolean instanceExistsHere() {
         return getDatabaseFile().exists();
+    }
+    
+    public boolean isConfigured() throws SQLException {
+        Statement statement = getConnection().createStatement();
+        ResultSet results = statement.executeQuery("SELECT * FROM meta WHERE key = configured");
+        
+        return results.next();
     }
     
     public void initialize() throws InstanceAlreadyExistsHereException, UnableToInitializeInstanceHereException {
