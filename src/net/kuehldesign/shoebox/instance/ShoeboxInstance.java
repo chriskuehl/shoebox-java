@@ -3,6 +3,7 @@ package net.kuehldesign.shoebox.instance;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -38,9 +39,14 @@ public class ShoeboxInstance {
     
     public boolean isConfigured() throws SQLException {
         Statement statement = getConnection().createStatement();
-        ResultSet results = statement.executeQuery("SELECT * FROM meta WHERE key = configured");
+        ResultSet results = statement.executeQuery("SELECT * FROM meta WHERE key = 'configured'");
         
-        return results.next();
+        boolean configured = results.next();
+        
+        results.close();
+        statement.close();
+        
+        return configured;
     }
     
     public void initialize() throws InstanceAlreadyExistsHereException, UnableToInitializeInstanceHereException {
@@ -53,7 +59,16 @@ public class ShoeboxInstance {
             
             Statement statement = getConnection().createStatement();
             statement.executeUpdate("CREATE TABLE meta (key TEXT NOT NULL UNIQUE DEFAULT '', value TEXT NOT NULL DEFAULT '')");
-            statement.executeUpdate("INSERT INTO meta (key, value) VALUES ('initialized', '{" + (new Date()).toString() + "}')')");
+            
+            PreparedStatement insertPropertyStatement = getConnection().prepareStatement("INSERT INTO meta (key, value) VALUES (?, ?)");
+            
+            insertPropertyStatement.setString(1, "initialized");
+            insertPropertyStatement.setString(2, (new Date()).toString());
+            
+            insertPropertyStatement.executeUpdate();
+            
+            insertPropertyStatement.close();
+            statement.close();
         } catch (UnableToConnectToDatabaseException ex) {
             ex.printStackTrace();
             throw new UnableToInitializeInstanceHereException();
