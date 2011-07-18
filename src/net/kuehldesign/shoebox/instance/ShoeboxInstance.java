@@ -4,8 +4,8 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.sql.Statement;
+import java.util.Date;
 import net.kuehldesign.shoebox.exception.InstanceAlreadyExistsHereException;
 import net.kuehldesign.shoebox.exception.UnableToConnectToDatabaseException;
 import net.kuehldesign.shoebox.exception.UnableToInitializeInstanceHereException;
@@ -42,7 +42,14 @@ public class ShoeboxInstance {
         
         try {
             establishConnection();
+            
+            Statement statement = getConnection().createStatement();
+            statement.executeUpdate("CREATE TABLE meta (key TEXT NOT NULL UNIQUE DEFAULT '', value TEXT NOT NULL DEFAULT '')");
+            statement.executeUpdate("INSERT INTO meta (key, value) VALUES ('initialized', '{" + (new Date()).toString() + "}')')");
         } catch (UnableToConnectToDatabaseException ex) {
+            ex.printStackTrace();
+            throw new UnableToInitializeInstanceHereException();
+        } catch (SQLException ex) {
             ex.printStackTrace();
             throw new UnableToInitializeInstanceHereException();
         }
