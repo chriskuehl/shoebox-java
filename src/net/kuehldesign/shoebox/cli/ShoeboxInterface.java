@@ -62,7 +62,7 @@ public class ShoeboxInterface {
             }
         } else if (command.equals("status")) {
             try {
-                if (instance.instanceExistsHere()) {
+                if (! instance.instanceExistsHere()) {
                     System.out.println("No instance exists here.");
                 } else if (! instance.isConfigured()) {
                     System.out.println("Instance exists but has not been configured.");
