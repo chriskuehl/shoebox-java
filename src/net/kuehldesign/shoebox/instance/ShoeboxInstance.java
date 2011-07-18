@@ -12,6 +12,7 @@ import net.kuehldesign.shoebox.exception.InstanceAlreadyExistsHereException;
 import net.kuehldesign.shoebox.exception.UnableToConnectToDatabaseException;
 import net.kuehldesign.shoebox.exception.UnableToInitializeInstanceHereException;
 import net.kuehldesign.shoebox.exception.UnableToLoadInstanceException;
+import sun.security.krb5.internal.TGSRep;
 
 public class ShoeboxInstance {
     private File directory;
@@ -59,6 +60,7 @@ public class ShoeboxInstance {
             
             Statement statement = getConnection().createStatement();
             statement.executeUpdate("CREATE TABLE meta (key TEXT NOT NULL UNIQUE DEFAULT '', value TEXT NOT NULL DEFAULT '')");
+            statement.executeUpdate("CREATE TABLE tags (title TEXT NOT NULL UNIQUE DEFAULT '', max_age INTEGER NOT NULL DEFAULT 0, delete_after INTEGER NOT NULL DEFAULT 0, accept_all INTEGER NOT NULL DEFAULT 0)");
             
             PreparedStatement insertPropertyStatement = getConnection().prepareStatement("INSERT INTO meta (key, value) VALUES (?, ?)");
             
@@ -76,6 +78,29 @@ public class ShoeboxInstance {
             ex.printStackTrace();
             throw new UnableToInitializeInstanceHereException();
         }
+    }
+    
+    public void setConfigured() throws SQLException {
+        PreparedStatement insertPropertyStatement = getConnection().prepareStatement("INSERT INTO meta (key, value) VALUES (?, ?)");
+
+        insertPropertyStatement.setString(1, "configured");
+        insertPropertyStatement.setString(2, (new Date()).toString());
+
+        insertPropertyStatement.executeUpdate();
+        insertPropertyStatement.close();
+    }
+    
+    public void addTag(ShoeboxTag tag) throws SQLException {
+        PreparedStatement addTagStatement = getConnection().prepareStatement("INSERT INTO tags (title, max_age, delete_after, accept_all) VALUES (?, ?, ?, ?)");
+
+        addTagStatement.setString(1, tag.getTitle());
+        addTagStatement.setInt(2, tag.getMaxAge());
+        addTagStatement.setInt(3, tag.getDeleteAfter());
+        addTagStatement.setBoolean(4, tag.acceptsAll());
+
+        addTagStatement.executeUpdate();
+
+        addTagStatement.close();
     }
     
     public void close() {

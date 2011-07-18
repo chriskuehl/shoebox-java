@@ -6,6 +6,7 @@ import net.kuehldesign.shoebox.exception.InstanceAlreadyExistsHereException;
 import net.kuehldesign.shoebox.exception.UnableToInitializeInstanceHereException;
 import net.kuehldesign.shoebox.exception.UnableToLoadInstanceException;
 import net.kuehldesign.shoebox.instance.ShoeboxInstance;
+import net.kuehldesign.shoebox.instance.ShoeboxTag;
 
 public class ShoeboxInterface {
     public static void main(String[] args) {
@@ -74,6 +75,24 @@ public class ShoeboxInterface {
                 ex.printStackTrace();
                 System.err.println("Unable to determine status of instance.");
                 System.exit(105);
+            }
+        } else if (command.equals("configure")) {
+            try {
+                if (! instance.instanceExistsHere()) {
+                    System.err.println("No instance exists here.");
+                    System.exit(106);
+                } else {
+                    instance.addTag(new ShoeboxTag("daily", (24 * 60 * 60), (7 * 24 * 60 * 60), true));
+                    instance.addTag(new ShoeboxTag("weekly", (7 * 24 * 60 * 60), (30 * 24 * 60 * 60), false));
+                    instance.addTag(new ShoeboxTag("monthly", (30 * 24 * 60 * 60), (6 * 30 * 24 * 60 * 60), false));
+                    instance.addTag(new ShoeboxTag("biannually", (6 * 30 * 24 * 60 * 60), 0, false));
+                    
+                    instance.setConfigured();
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                System.err.println("Unable to configure instance.");
+                System.exit(107);
             }
         }
     }
