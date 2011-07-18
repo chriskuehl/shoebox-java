@@ -5,6 +5,7 @@ public class ShoeboxTag {
     private int maxAge;
     private int deleteAfter;
     private boolean acceptsAll;
+    private int id;
     
     public ShoeboxTag(String title, int maxAge, int deleteAfter, boolean acceptsAll) {
         this.title = title;
@@ -29,8 +30,16 @@ public class ShoeboxTag {
     public String getTitle() {
         return title;
     }
+    
+    public int getID() {
+        return id;
+    }
 
     // setters
+    public void setID(int id) {
+        this.id = id;
+    }
+    
     public void setAcceptsAll(boolean acceptsAll) {
         this.acceptsAll = acceptsAll;
     }

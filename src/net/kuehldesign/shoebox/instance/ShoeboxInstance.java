@@ -8,11 +8,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Date;
+import java.util.LinkedList;
 import net.kuehldesign.shoebox.exception.InstanceAlreadyExistsHereException;
 import net.kuehldesign.shoebox.exception.UnableToConnectToDatabaseException;
 import net.kuehldesign.shoebox.exception.UnableToInitializeInstanceHereException;
 import net.kuehldesign.shoebox.exception.UnableToLoadInstanceException;
-import sun.security.krb5.internal.TGSRep;
 
 public class ShoeboxInstance {
     private File directory;
@@ -88,6 +88,25 @@ public class ShoeboxInstance {
 
         insertPropertyStatement.executeUpdate();
         insertPropertyStatement.close();
+    }
+    
+    public LinkedList<ShoeboxTag> getTags() throws SQLException {
+        LinkedList<ShoeboxTag> tags = new LinkedList();
+        
+        Statement statement = getConnection().createStatement();
+        ResultSet results = statement.executeQuery("SELECT rowid, * FROM tags");
+        
+        while (results.next()) {
+            ShoeboxTag tag = new ShoeboxTag(results.getString("title"), results.getInt("max_age"), results.getInt("delete_after"), results.getBoolean("accept_all"));
+            tag.setID(results.getInt("rowid"));
+            
+            tags.add(tag);
+        }
+        
+        results.close();
+        statement.close();
+        
+        return tags;
     }
     
     public void addTag(ShoeboxTag tag) throws SQLException {

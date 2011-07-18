@@ -2,6 +2,7 @@ package net.kuehldesign.shoebox.cli;
 
 import java.io.File;
 import java.sql.SQLException;
+import java.util.LinkedList;
 import net.kuehldesign.shoebox.exception.InstanceAlreadyExistsHereException;
 import net.kuehldesign.shoebox.exception.UnableToInitializeInstanceHereException;
 import net.kuehldesign.shoebox.exception.UnableToLoadInstanceException;
@@ -88,10 +89,32 @@ public class ShoeboxInterface {
                     instance.addTag(new ShoeboxTag("biannually", (6 * 30 * 24 * 60 * 60), 0, false));
                     
                     instance.setConfigured();
+                    
+                    System.out.println("Instance has been configured with default tags. Use tags command to view existing tags.");
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();
                 System.err.println("Unable to configure instance.");
+                System.exit(107);
+            }
+        } else if (command.equals("tags")) {
+            try {
+                if (! instance.instanceExistsHere()) {
+                    System.err.println("No instance exists here.");
+                    System.exit(107);
+                } else {
+                    LinkedList<ShoeboxTag> tags = instance.getTags();
+                    
+                    //System.out.println("Title\t\tMax Age\t\tDelete After\t\tAccept All Snapshots");
+                    //System.out.println("=====\t\t=======\t\t============\t\t=====================");
+                    
+                    for (ShoeboxTag tag : tags) {
+                        System.out.println(tag.getTitle() + " (" + tag.getID() + "): max_age=" + tag.getMaxAge() + ", delete_after=" + tag.getDeleteAfter() + ", accept_all=" + (tag.acceptsAll() ? "yes" : "no"));
+                    }
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                System.err.println("Unable to find tags.");
                 System.exit(107);
             }
         }
