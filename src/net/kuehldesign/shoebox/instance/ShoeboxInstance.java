@@ -61,8 +61,10 @@ public class ShoeboxInstance {
             establishConnection();
             
             Statement statement = getConnection().createStatement();
-            statement.executeUpdate("CREATE TABLE meta (key TEXT NOT NULL UNIQUE DEFAULT '', value TEXT NOT NULL DEFAULT '')");
-            statement.executeUpdate("CREATE TABLE tags (title TEXT NOT NULL UNIQUE DEFAULT '', max_age INTEGER NOT NULL DEFAULT 0, delete_after INTEGER NOT NULL DEFAULT 0, accept_all INTEGER NOT NULL DEFAULT 0)");
+            statement.executeUpdate("CREATE TABLE meta (key TEXT NOT NULL UNIQUE, value TEXT NOT NULL)");
+            statement.executeUpdate("CREATE TABLE tags (title TEXT NOT NULL UNIQUE, max_age INTEGER NOT NULL DEFAULT 0, delete_after INTEGER NOT NULL DEFAULT 0, accept_all INTEGER NOT NULL DEFAULT 0)");
+            statement.executeUpdate("CREATE TABLE snapshots (date_added INTEGER NOT NULL, comments TEXT DEFAULT NULL, deleted INTEGER NOT NULL DEFAULT 0)");
+            statement.executeUpdate("CREATE TABLE snapshot_tags (snapshot_id INTEGER NOT NULL, tag_id INTEGER NOT NULL)");
             
             addProperty("initialized", (new Date()).toString());
             
