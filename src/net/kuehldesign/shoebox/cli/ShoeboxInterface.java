@@ -45,10 +45,6 @@ public class ShoeboxInterface {
                 System.err.println("The directory specified already exists as a file.");
                 System.exit(101);
             }
-            
-            if (! workingDirectory.exists()) {
-                workingDirectory.mkdirs();
-            }
         }
         
         ShoeboxInstance instance = null;

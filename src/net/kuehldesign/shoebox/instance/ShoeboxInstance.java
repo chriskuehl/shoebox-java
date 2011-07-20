@@ -56,6 +56,8 @@ public class ShoeboxInstance {
         }
         
         try {
+            new File(getDirectoryPath()).mkdirs();
+            
             establishConnection();
             
             Statement statement = getConnection().createStatement();
