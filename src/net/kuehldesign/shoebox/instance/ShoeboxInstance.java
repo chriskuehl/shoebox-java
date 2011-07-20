@@ -64,14 +64,8 @@ public class ShoeboxInstance {
             statement.executeUpdate("CREATE TABLE meta (key TEXT NOT NULL UNIQUE DEFAULT '', value TEXT NOT NULL DEFAULT '')");
             statement.executeUpdate("CREATE TABLE tags (title TEXT NOT NULL UNIQUE DEFAULT '', max_age INTEGER NOT NULL DEFAULT 0, delete_after INTEGER NOT NULL DEFAULT 0, accept_all INTEGER NOT NULL DEFAULT 0)");
             
-            PreparedStatement insertPropertyStatement = getConnection().prepareStatement("INSERT INTO meta (key, value) VALUES (?, ?)");
+            addProperty("initialized", (new Date()).toString());
             
-            insertPropertyStatement.setString(1, "initialized");
-            insertPropertyStatement.setString(2, (new Date()).toString());
-            
-            insertPropertyStatement.executeUpdate();
-            
-            insertPropertyStatement.close();
             statement.close();
         } catch (UnableToConnectToDatabaseException ex) {
             ex.printStackTrace();
@@ -82,14 +76,19 @@ public class ShoeboxInstance {
         }
     }
     
-    public void setConfigured() throws SQLException {
+    public void addProperty(String key, String value) throws SQLException {
         PreparedStatement insertPropertyStatement = getConnection().prepareStatement("INSERT INTO meta (key, value) VALUES (?, ?)");
 
-        insertPropertyStatement.setString(1, "configured");
-        insertPropertyStatement.setString(2, (new Date()).toString());
+        insertPropertyStatement.setString(1, key);
+        insertPropertyStatement.setString(2, value);
 
         insertPropertyStatement.executeUpdate();
+
         insertPropertyStatement.close();
+    }
+    
+    public void setConfigured() throws SQLException {
+        addProperty("configured", (new Date()).toString());
     }
     
     public void deleteTag(int tagIDToDelete) throws SQLException {
