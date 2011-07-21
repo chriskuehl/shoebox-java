@@ -5,9 +5,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import net.kuehldesign.shoebox.exception.InstanceAlreadyExistsHereException;
 import net.kuehldesign.shoebox.exception.UnableToInitializeInstanceHereException;
 import net.kuehldesign.shoebox.exception.UnableToLoadInstanceException;
@@ -29,35 +28,10 @@ public class ShoeboxInterface {
         InputStreamReader inreader = new InputStreamReader(System.in);
         BufferedReader reader = new BufferedReader(inreader);
         
-        File workingDirectory = new File("");
-        
-        // is there an extra parameter for directory?
-        if (args.length >= 2) {
-            String newDirectory = args[1];
-            
-            if (newDirectory.endsWith(File.separator)) {
-                newDirectory = newDirectory.substring(0, newDirectory.length() - 1);
-            }
-            
-            workingDirectory = new File(newDirectory);
-            
-            if (workingDirectory.exists() && ! workingDirectory.isDirectory()) {
-                System.err.println("The directory specified already exists as a file.");
-                System.exit(101);
-            }
-        }
-        
-        ShoeboxInstance instance = null;
-        
-        try {
-            instance = new ShoeboxInstance(workingDirectory);
-        } catch (UnableToLoadInstanceException ex) {
-            System.err.println("This Shoebox instance is malformed.");
-            System.exit(104);
-        }
-        
         // branch out for each possible command
         if (command.equals("init")) {
+            ShoeboxInstance instance = getInstance(args, 0);
+            
             try {
                 instance.initialize();
             } catch (InstanceAlreadyExistsHereException ex) {
@@ -68,6 +42,8 @@ public class ShoeboxInterface {
                 System.exit(103);
             }
         } else if (command.equals("status")) {
+            ShoeboxInstance instance = getInstance(args, 0);
+            
             try {
                 if (! instance.instanceExistsHere()) {
                     System.out.println("No instance exists here.");
@@ -83,6 +59,8 @@ public class ShoeboxInterface {
                 System.exit(105);
             }
         } else if (command.equals("configure")) {
+            ShoeboxInstance instance = getInstance(args, 0);
+            
             try {
                 if (! instance.instanceExistsHere()) {
                     System.err.println("No instance exists here.");
@@ -103,6 +81,8 @@ public class ShoeboxInterface {
                 System.exit(107);
             }
         } else if (command.equals("tags")) {
+            ShoeboxInstance instance = getInstance(args, 0);
+            
             try {
                 if (! instance.instanceExistsHere()) {
                     System.err.println("No instance exists here.");
@@ -194,6 +174,8 @@ public class ShoeboxInterface {
                 System.err.println("Unable to read from console.");
                 System.exit(108);
             }
+        } else {
+            System.out.println("Unknown command. Try help.");
         }
     }
     
@@ -222,5 +204,36 @@ public class ShoeboxInterface {
                 System.err.println("That wasn't expected. Please try again.");
             }
         }
+    }
+    
+    public static ShoeboxInstance getInstance(String[] args, int extraParams) {
+        File workingDirectory = new File("");
+        
+        // is there an extra parameter for directory?
+        if (args.length >= (2 + extraParams)) {
+            String newDirectory = args[1];
+            
+            if (newDirectory.endsWith(File.separator)) {
+                newDirectory = newDirectory.substring(0, newDirectory.length() - 1);
+            }
+            
+            workingDirectory = new File(newDirectory);
+            
+            if (workingDirectory.exists() && ! workingDirectory.isDirectory()) {
+                System.err.println("The directory specified already exists as a file.");
+                System.exit(101);
+            }
+        }
+        
+        ShoeboxInstance instance = null;
+        
+        try {
+            instance = new ShoeboxInstance(workingDirectory);
+        } catch (UnableToLoadInstanceException ex) {
+            System.err.println("This Shoebox instance is malformed.");
+            System.exit(104);
+        }
+        
+        return instance;
     }
 }
