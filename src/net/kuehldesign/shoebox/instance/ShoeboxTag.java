@@ -39,20 +39,4 @@ public class ShoeboxTag {
     public void setID(int id) {
         this.id = id;
     }
-    
-    public void setAcceptsAll(boolean acceptsAll) {
-        this.acceptsAll = acceptsAll;
-    }
-
-    public void setDeleteAfter(int deleteAfter) {
-        this.deleteAfter = deleteAfter;
-    }
-
-    public void setMaxAge(int maxAge) {
-        this.maxAge = maxAge;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
 }

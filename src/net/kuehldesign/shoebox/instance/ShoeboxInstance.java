@@ -7,12 +7,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import net.kuehldesign.shoebox.exception.InstanceAlreadyExistsHereException;
 import net.kuehldesign.shoebox.exception.UnableToConnectToDatabaseException;
+import net.kuehldesign.shoebox.exception.UnableToFindFileException;
 import net.kuehldesign.shoebox.exception.UnableToInitializeInstanceHereException;
 import net.kuehldesign.shoebox.exception.UnableToLoadInstanceException;
+import net.kuehldesign.shoebox.exception.UnableToMoveFileException;
 
 public class ShoeboxInstance {
     private File directory;
@@ -57,14 +60,15 @@ public class ShoeboxInstance {
         
         try {
             new File(getDirectoryPath()).mkdirs();
+            new File(getDirectoryPath() + "stored").mkdir();
             
             establishConnection();
             
             Statement statement = getConnection().createStatement();
             statement.executeUpdate("CREATE TABLE meta (key TEXT NOT NULL UNIQUE, value TEXT NOT NULL)");
             statement.executeUpdate("CREATE TABLE tags (title TEXT NOT NULL UNIQUE, max_age INTEGER NOT NULL DEFAULT 0, delete_after INTEGER NOT NULL DEFAULT 0, accept_all INTEGER NOT NULL DEFAULT 0)");
-            statement.executeUpdate("CREATE TABLE snapshots (date_added INTEGER NOT NULL, comments TEXT DEFAULT NULL, deleted INTEGER NOT NULL DEFAULT 0)");
-            statement.executeUpdate("CREATE TABLE snapshot_tags (snapshot_id INTEGER NOT NULL, tag_id INTEGER NOT NULL)");
+            statement.executeUpdate("CREATE TABLE files (date_added INTEGER NOT NULL, name TEXT NOT NULL UNIQUE, deleted INTEGER NOT NULL DEFAULT 0)");
+            statement.executeUpdate("CREATE TABLE file_tags (snapshot_id INTEGER NOT NULL, tag_id INTEGER NOT NULL)");
             
             addProperty("initialized", (new Date()).toString());
             
@@ -169,6 +173,62 @@ public class ShoeboxInstance {
                 ex.printStackTrace();
             }
         }
+    }
+    
+    public void storeFile(File fileToStore) throws UnableToMoveFileException, SQLException {
+        PreparedStatement storeFileStatement = getConnection().prepareStatement("INSERT INTO files (date_added, name) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS);
+        
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HHmmssS");
+        String storeName = dateFormat.format(new Date());
+        
+        int currentTime = (int) ((new Date()).getTime() / 1000);
+        
+        storeFileStatement.setInt(1, currentTime);
+        storeFileStatement.setString(2, storeName);
+        
+        storeFileStatement.executeUpdate();
+        
+        ResultSet insertKeys = storeFileStatement.getGeneratedKeys();
+        
+        if (! insertKeys.next()) {
+            throw new SQLException("Unable to find inserted key.");
+        }
+        
+        int fileID = insertKeys.getInt(1);
+        
+        insertKeys.close();
+        storeFileStatement.close();
+        
+        File newFileLocation = new File(getDirectoryPath() + "stored/" + storeName);
+        
+        if (! fileToStore.renameTo(newFileLocation)) {
+            throw new UnableToMoveFileException();
+        }
+        
+        // now get the the file object for tags, etc
+        ShoeboxStoredFile file = null;
+        
+        try {
+            file = getStoredFileByID(fileID);
+        } catch (UnableToFindFileException ex) {
+            throw new SQLException("Unable to find file based on inserted key.");
+        }
+    }
+    
+    public ShoeboxStoredFile getStoredFileByID(int fileID) throws SQLException, UnableToFindFileException {
+        Statement statement = getConnection().createStatement();
+        ResultSet results = statement.executeQuery("SELECT * FROM files WHERE rowid = " + fileID);
+        
+        if (! results.next()) {
+            throw new UnableToFindFileException();
+        }
+        
+        
+        long addedEpoch = results.getInt("date_added");
+        addedEpoch = addedEpoch * 1000;
+        Date addedOn = new Date(addedEpoch);
+        
+        return new ShoeboxStoredFile(fileID, addedOn, results.getString("name"), results.getBoolean("deleted"));
     }
     
     // private methods

@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import net.kuehldesign.shoebox.exception.InstanceAlreadyExistsHereException;
 import net.kuehldesign.shoebox.exception.UnableToInitializeInstanceHereException;
 import net.kuehldesign.shoebox.exception.UnableToLoadInstanceException;
+import net.kuehldesign.shoebox.exception.UnableToMoveFileException;
 import net.kuehldesign.shoebox.exception.UnableToReadFromConsoleException;
 import net.kuehldesign.shoebox.instance.ShoeboxInstance;
 import net.kuehldesign.shoebox.instance.ShoeboxTag;
@@ -41,6 +42,8 @@ public class ShoeboxInterface {
                 System.err.println("Unable to initialize instance here.");
                 System.exit(103);
             }
+            
+            System.out.println("Instance has been initialized.");
         } else if (command.equals("status")) {
             ShoeboxInstance instance = getInstance(args, 0);
             
@@ -173,6 +176,28 @@ public class ShoeboxInterface {
                 System.err.println("Unable to read from console.");
                 System.exit(108);
             }
+        } else if (command.equals("store")) {
+            ShoeboxInstance instance = getInstance(args, 1);
+            
+            File fileToStore = new File(args[args.length - 1]);
+            
+            if (! fileToStore.exists()) {
+                System.err.println("The file you wanted to store doesn't seem to exist.");
+                System.exit(109);
+            }
+            
+            try {
+                instance.storeFile(fileToStore);
+            } catch (UnableToMoveFileException ex) {
+                System.err.println("Unable to move file.");
+                System.exit(110);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                System.err.println("Unable to store file.");
+                System.exit(111);
+            }
+            
+            System.out.println("File stored successfully.");
         } else {
             System.out.println("Unknown command. Try help.");
         }
