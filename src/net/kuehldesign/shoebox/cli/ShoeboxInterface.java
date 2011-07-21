@@ -102,7 +102,6 @@ public class ShoeboxInterface {
                     System.out.println("  1) Add another tag");
                     System.out.println("  2) Delete an existing tag");
                     System.out.println("  3) Modify an existing tag");
-                    
                     System.out.println("  0) Exit");
                     
                     int choice = getIntFromConsole(reader, "Enter your choice:");
