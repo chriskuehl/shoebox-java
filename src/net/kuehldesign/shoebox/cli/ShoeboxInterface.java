@@ -13,6 +13,7 @@ import net.kuehldesign.shoebox.exception.UnableToLoadInstanceException;
 import net.kuehldesign.shoebox.exception.UnableToMoveFileException;
 import net.kuehldesign.shoebox.exception.UnableToReadFromConsoleException;
 import net.kuehldesign.shoebox.instance.ShoeboxInstance;
+import net.kuehldesign.shoebox.instance.ShoeboxStoredFile;
 import net.kuehldesign.shoebox.instance.ShoeboxTag;
 
 public class ShoeboxInterface {
@@ -206,6 +207,23 @@ public class ShoeboxInterface {
                 ex.printStackTrace();
                 System.err.println("Unable to store file.");
                 System.exit(111);
+            }
+        } else if (command.equals("clean")) {
+            ShoeboxInstance instance = getInstance(args, 0);
+            
+            try {
+                LinkedList<ShoeboxStoredFile> filesWithoutTags = instance.getFilesWithoutTags();
+
+                for (ShoeboxStoredFile file : filesWithoutTags) {
+                    System.out.println("Removing orphan file: " + file.getName());
+                    instance.removeFile(file);
+                }
+                
+                System.out.println("Instance has been cleaned of files with no tags.");
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                System.err.println("Unable to clean instance.");
+                System.exit(112);
             }
         } else {
             System.out.println("Unknown command. Try help.");

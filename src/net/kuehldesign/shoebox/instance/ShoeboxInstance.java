@@ -219,6 +219,31 @@ public class ShoeboxInstance {
         return tagsGiven;
     }
     
+    public LinkedList<ShoeboxStoredFile> getFilesWithoutTags() throws SQLException {
+        Statement statement = getConnection().createStatement();
+        ResultSet results = statement.executeQuery("SELECT rowid, * FROM files WHERE files.rowid NOT IN(SELECT file_tags.file_id FROM file_tags)");
+        
+        LinkedList<ShoeboxStoredFile> filesWithoutTags = new LinkedList();
+        
+        while (results.next()) {
+            filesWithoutTags.add(getFileFromResults(results));
+        }
+        
+        results.close();
+        statement.close();
+        
+        return filesWithoutTags;
+    }
+    
+    public void removeFile(ShoeboxStoredFile storedFile) throws SQLException {
+        File file = new File(getDirectoryPath() + "stored/" + storedFile.getName());
+        file.delete();
+        
+        Statement statement = getConnection().createStatement();
+        statement.executeUpdate("DELETE FROM files WHERE rowid = " + storedFile.getID());
+        statement.close();
+    }
+    
     public LinkedList<String> addTagsForFile(ShoeboxStoredFile file) throws SQLException {
         Statement statement = getConnection().createStatement();
         ResultSet results = statement.executeQuery("SELECT rowid, * FROM tags");
@@ -274,13 +299,22 @@ public class ShoeboxInstance {
     
     public ShoeboxStoredFile getStoredFileByID(int fileID) throws SQLException, UnableToFindFileException {
         Statement statement = getConnection().createStatement();
-        ResultSet results = statement.executeQuery("SELECT * FROM files WHERE rowid = " + fileID);
+        ResultSet results = statement.executeQuery("SELECT rowid, * FROM files WHERE rowid = " + fileID);
         
         if (! results.next()) {
             throw new UnableToFindFileException();
         }
         
+        ShoeboxStoredFile storedFile = getFileFromResults(results);
         
+        results.close();
+        statement.close();
+        
+        return storedFile;
+    }
+    
+    // private methods
+    private ShoeboxStoredFile getFileFromResults(ResultSet results) throws SQLException {
         long addedEpoch = results.getInt("date_added");
         addedEpoch = addedEpoch * 1000;
         Date addedOn = new Date(addedEpoch);
@@ -288,13 +322,8 @@ public class ShoeboxInstance {
         String name = results.getString("name");
         boolean deleted = results.getBoolean("deleted");
         
-        results.close();
-        statement.close();
-        
-        return new ShoeboxStoredFile(fileID, addedOn, name, deleted);
+        return new ShoeboxStoredFile(results.getInt("rowid"), addedOn, name, deleted);
     }
-    
-    // private methods
     private void establishConnection() throws UnableToConnectToDatabaseException {
         try {
             Class.forName("org.sqlite.JDBC");
