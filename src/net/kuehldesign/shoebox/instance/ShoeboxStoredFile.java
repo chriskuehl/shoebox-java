@@ -24,7 +24,7 @@ public class ShoeboxStoredFile {
         return deleted;
     }
 
-    public int getId() {
+    public int getID() {
         return id;
     }
 

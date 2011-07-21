@@ -68,7 +68,7 @@ public class ShoeboxInstance {
             statement.executeUpdate("CREATE TABLE meta (key TEXT NOT NULL UNIQUE, value TEXT NOT NULL)");
             statement.executeUpdate("CREATE TABLE tags (title TEXT NOT NULL UNIQUE, max_age INTEGER NOT NULL DEFAULT 0, delete_after INTEGER NOT NULL DEFAULT 0, accept_all INTEGER NOT NULL DEFAULT 0)");
             statement.executeUpdate("CREATE TABLE files (date_added INTEGER NOT NULL, name TEXT NOT NULL UNIQUE, deleted INTEGER NOT NULL DEFAULT 0)");
-            statement.executeUpdate("CREATE TABLE file_tags (snapshot_id INTEGER NOT NULL, tag_id INTEGER NOT NULL)");
+            statement.executeUpdate("CREATE TABLE file_tags (file_id INTEGER NOT NULL, tag_id INTEGER NOT NULL)");
             
             addProperty("initialized", (new Date()).toString());
             
@@ -175,7 +175,7 @@ public class ShoeboxInstance {
         }
     }
     
-    public void storeFile(File fileToStore) throws UnableToMoveFileException, SQLException {
+    public LinkedList<String> storeFile(File fileToStore) throws UnableToMoveFileException, SQLException {
         PreparedStatement storeFileStatement = getConnection().prepareStatement("INSERT INTO files (date_added, name) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS);
         
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HHmmssS");
@@ -213,6 +213,63 @@ public class ShoeboxInstance {
         } catch (UnableToFindFileException ex) {
             throw new SQLException("Unable to find file based on inserted key.");
         }
+        
+        LinkedList<String> tagsGiven = addTagsForFile(file);
+        
+        return tagsGiven;
+    }
+    
+    public LinkedList<String> addTagsForFile(ShoeboxStoredFile file) throws SQLException {
+        Statement statement = getConnection().createStatement();
+        ResultSet results = statement.executeQuery("SELECT rowid, * FROM tags");
+        
+        LinkedList<String> tagsGiven = new LinkedList();
+        
+        while (results.next()) {
+            ShoeboxTag tag = new ShoeboxTag(results.getString("title"), results.getInt("max_age"), results.getInt("delete_after"), results.getBoolean("accept_all"));
+            tag.setID(results.getInt("rowid"));
+            
+            boolean shouldGiveTag = false;
+            
+            if (tag.acceptsAll()) {
+                shouldGiveTag = true;
+            } else {
+                // how old is the last file this tag was given to?
+                Statement fileStatement = getConnection().createStatement();
+                ResultSet fileResults = fileStatement.executeQuery("SELECT MAX(files.date_added) AS last_added FROM (file_tags LEFT JOIN files on((file_tags.file_id = files.rowid))) WHERE tag_id = " + tag.getID());
+                
+                if (fileResults.next()) {
+                    int lastAdded = fileResults.getInt("last_added");
+                    int currentTime = (int) ((new Date().getTime()) / 1000);
+                    int age = currentTime - lastAdded;
+                    
+                    if (age > tag.getMaxAge()) {
+                        shouldGiveTag = true;
+                    }
+                } else {
+                    shouldGiveTag = true;
+                }
+                
+                fileResults.close();
+                fileStatement.close();
+            }
+            
+            if (shouldGiveTag) {
+                tagsGiven.add(tag.getTitle());
+                addTag(file.getID(), tag.getID());
+            }
+        }
+        
+        results.close();
+        statement.close();
+        
+        return tagsGiven;
+    }
+    
+    public void addTag(int fileID, int tagID) throws SQLException {
+        Statement statement = getConnection().createStatement();
+        statement.executeUpdate("INSERT INTO file_tags (file_id, tag_id) VALUES (" + fileID + ", " + tagID + ")");
+        statement.close();
     }
     
     public ShoeboxStoredFile getStoredFileByID(int fileID) throws SQLException, UnableToFindFileException {
@@ -228,7 +285,13 @@ public class ShoeboxInstance {
         addedEpoch = addedEpoch * 1000;
         Date addedOn = new Date(addedEpoch);
         
-        return new ShoeboxStoredFile(fileID, addedOn, results.getString("name"), results.getBoolean("deleted"));
+        String name = results.getString("name");
+        boolean deleted = results.getBoolean("deleted");
+        
+        results.close();
+        statement.close();
+        
+        return new ShoeboxStoredFile(fileID, addedOn, name, deleted);
     }
     
     // private methods

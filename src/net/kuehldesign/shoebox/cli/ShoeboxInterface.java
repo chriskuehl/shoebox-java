@@ -187,7 +187,18 @@ public class ShoeboxInterface {
             }
             
             try {
-                instance.storeFile(fileToStore);
+                LinkedList<String> tagsGiven = instance.storeFile(fileToStore);
+                String tags = "";
+                
+                for (String tagGiven : tagsGiven) {
+                    tags += tagGiven + ", ";
+                }
+                
+                if (tags.length() > 0) {
+                    tags = tags.substring(0, tags.length() - 2);
+                }
+                
+                System.out.println("File stored successfully (tags given: " + tags + ").");
             } catch (UnableToMoveFileException ex) {
                 System.err.println("Unable to move file.");
                 System.exit(110);
@@ -196,8 +207,6 @@ public class ShoeboxInterface {
                 System.err.println("Unable to store file.");
                 System.exit(111);
             }
-            
-            System.out.println("File stored successfully.");
         } else {
             System.out.println("Unknown command. Try help.");
         }
