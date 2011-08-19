@@ -235,6 +235,27 @@ public class ShoeboxInstance {
         return filesWithoutTags;
     }
     
+    public LinkedList<Integer> getExpiredTags() throws SQLException {
+        LinkedList<Integer> expiredTags = new LinkedList();
+        
+        Statement statement = getConnection().createStatement();
+        ResultSet results = statement.executeQuery("SELECT file_tags.rowid AS tag_uid FROM file_tags, files, tags WHERE files.rowid = file_tags.file_id AND files.deleted = 0 AND tag_id = tags.rowid AND " + ((int) (new Date().getTime() / 1000)) + " > tags.delete_after + files.date_added");
+        
+        while (results.next()) {
+            expiredTags.add(results.getInt("tag_uid"));
+        }
+        
+        return expiredTags;
+    }
+    
+    public int removeExpiredTags() throws SQLException {
+        Statement statement = getConnection().createStatement();
+        int expiredTags = statement.executeUpdate("DELETE FROM file_tags WHERE file_tags.rowid IN(SELECT file_tags.rowid AS tag_uid FROM file_tags, files, tags WHERE files.rowid = file_tags.file_id AND files.deleted = 0 AND tag_id = tags.rowid AND " + ((int) (new Date().getTime() / 1000)) + " > tags.delete_after + files.date_added)");
+        statement.close();
+        
+        return expiredTags;
+    }
+    
     public void removeFile(ShoeboxStoredFile storedFile) throws SQLException {
         File file = new File(getDirectoryPath() + "stored/" + storedFile.getName());
         file.delete();
