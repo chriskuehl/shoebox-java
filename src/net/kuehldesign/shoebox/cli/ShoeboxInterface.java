@@ -55,6 +55,8 @@ public class ShoeboxInterface {
                     System.out.println("Instance exists but has not been configured.");
                 } else {
                     System.out.println("Instance is configured.");
+                    System.out.println("If you were to run \"update\", " + instance.getExpiredTags().size() + " expired tags would be removed.");
+                    System.out.println("If you were to run \"clean\", " + instance.getFilesWithoutTags().size() + " stored files with no tags would be removed.");
                     // TODO: more instance information
                 }
             } catch (SQLException ex) {
