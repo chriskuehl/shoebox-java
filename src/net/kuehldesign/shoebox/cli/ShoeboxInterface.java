@@ -225,6 +225,18 @@ public class ShoeboxInterface {
                 System.err.println("Unable to clean instance.");
                 System.exit(112);
             }
+        } else if (command.equals("update")) {
+            ShoeboxInstance instance = getInstance(args, 0);
+            
+            try {
+                int tagsRemoved = instance.removeExpiredTags();
+                
+                System.out.println("Instance has been updated (tags removed: " + tagsRemoved + ")");
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                System.err.println("Unable to update instance.");
+                System.exit(113);
+            }
         } else {
             System.out.println("Unknown command. Try help.");
         }
