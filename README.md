@@ -1,4 +1,4 @@
-=== Shoebox ===
+## Shoebox
 
 **Current Status:**
 The basic feature set is complete, but additional testing needs to be done to ensure all parts of the application work as expected. In addition, some features need to be polished.
