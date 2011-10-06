@@ -1,5 +1,6 @@
 === Shoebox ===
-*Current Status:*
+
+**Current Status:**
 The basic feature set is complete, but additional testing needs to be done to ensure all parts of the application work as expected. In addition, some features need to be polished.
 
 Shoebox is a simple Java archiving system. It is intended for the storage of snapshots.
